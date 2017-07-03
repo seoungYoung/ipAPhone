@@ -54,12 +54,8 @@
 					//					trace(tmp[i]);
 					var ar:Array=String(tmp[i]).split(",");
 //					var o:Object={"no":(i+1),"tId":ar[1],"tName":ar[0],"tPhone":ar[2],"tPrimeNum":ar[3],"tPrivateNum":ar[4],"groupName":ar[5],"workDivide":ar[6]};
-					var o:Object={"userInfo":ar[0],"manageNumber":ar[1],"position":ar[2]};
+					var o:Object={"userInfo":ar[0],"manageNumber":ar[1],"position":ar[2],"etc":ar[3]};
 					listArray.push(o);
-				}
-				
-				for(var j:uint=0;j<listArray.length;j++) {
-					trace(listArray[j]['manageNumber']);
 				}
 				this.$searchList=new ArrayCollection(listArray);
 				this.errorMsg("데이터를 가져왔습니다");
@@ -105,6 +101,8 @@
 									 text="관리번호: {data.manageNumber} ," />
 							<s:Label fontSize="10" fontWeight="bold" 
 									 text="장비위치: {data.position}" />
+							<s:Label fontSize="10" fontWeight="bold" 
+									 text="기타: {data.etc}" />
 						</s:HGroup>
 					</s:HGroup>
 				</s:ItemRenderer>
