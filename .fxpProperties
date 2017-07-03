@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" compiles="true" parentProject="6418e507-35b4-47c8-b93d-9403cbff0c8b" projectUUID="6418e507-35b4-47c8-b93d-9403cbff0c8b" pureCatalystProject="false" sdkVersion="4.6.0" uuid="c3dd09d3-258d-46c9-99f4-0d7fcbc47a1f" version="15">
+  <projects/>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="c3dd09d3-258d-46c9-99f4-0d7fcbc47a1f"/>
+    <linked location="C:/Users/user/Adobe Flash Builder 4.7/ipAphone/libs" path="/libs" position="1" uuid="7c35b6a6-2140-46ca-851a-58c600982d88"/>
+  </swc>
+  <misc/>
+  <theme/>
+  <mxmlFormattingPrefs groupAttributesByState="true" maxLineWidth="100" mxmlAlignAttributes="true" mxmlAttributeOrder="id,userLabel,includeIn,excludeFrom,visible,x,y,z,left,right,top,bottom,width,height,minWidth,minHeight,maxWidth,maxHeight,label" mxmlKeepAttributeValuesOrganized="true"/>
+</fxpProperties>

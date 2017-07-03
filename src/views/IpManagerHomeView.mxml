@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		creationComplete="fnloadDataHandler()" title="IpManagerHomeView">
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="login"/>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.core.IFlexDisplayObject;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			import air.net.URLMonitor;
+			
+			import skins.MyButtonSkin;
+			
+			import utils.DBHandler;
+			private var monitor:URLMonitor;
+			private var ac:ArrayCollection;
+			[Bindable]
+			private var $searchList:ArrayCollection;
+			[Bindable]
+			private var $cnt:int;
+			private var $no:int;
+			public static var $changeValue:Object;
+			private var db:DBHandler;
+			private var $schoolPhone:String;
+			public static var $ip:String="poseidon.iptime.org:12345";;
+			public static var $teacherCode:String;
+			private var $myso:SharedObject;
+			[Bindable]
+			private var $teacherName:String="";
+			private var $oriData:ArrayCollection;
+			private function fnAppEnd(e:Event=null):void {
+				this.navigator.popView();
+			}
+			private function fnloadDataHandler():void {
+				var hs:HTTPService=new HTTPService();
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/index.html?classA=10&classB=125&classC=145";
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResult5);
+				hs.send();
+			}
+			private function fnResult5(e:ResultEvent):void {
+				var tmp:Array=String(e.result).split("\r\n");
+				var listArray:Array=new Array();
+				for(var i:uint=0;i<tmp.length-1;i++) {
+					//					trace(tmp[i]);
+					var ar:Array=String(tmp[i]).split(",");
+//					var o:Object={"no":(i+1),"tId":ar[1],"tName":ar[0],"tPhone":ar[2],"tPrimeNum":ar[3],"tPrivateNum":ar[4],"groupName":ar[5],"workDivide":ar[6]};
+					var o:Object={"userInfo":ar[0],"manageNumber":ar[1],"position":ar[2]};
+					listArray.push(o);
+				}
+				
+				for(var j:uint=0;j<listArray.length;j++) {
+					trace(listArray[j]['manageNumber']);
+				}
+				this.$searchList=new ArrayCollection(listArray);
+				this.errorMsg("데이터를 가져왔습니다");
+			}
+			
+			private function errorMsg(str:String):void {
+				var alert:MyAlert=new MyAlert();
+				alert.msg=str;
+				PopUpManager.addPopUp(alert,this,true);
+				PopUpManager.centerPopUp(alert);
+				//				alert.addEventListener("alertClose",fnClose);
+			}
+		]]>
+	</fx:Script>
+	<s:Label top="10" horizontalCenter="0" text="IP 관리"/>
+	<s:List id="lst" y="80" width="100%" height="70%" dataProvider="{this.$searchList}" doubleClickEnabled="true"  
+			 >
+		<s:itemRenderer>
+			<fx:Component>
+				<s:ItemRenderer  >
+					<s:states>
+						<s:State name="normal" />
+						<s:State name="hovered" />
+						<s:State name="selected" />
+					</s:states>
+					<fx:Script>
+						<![CDATA[
+							
+						]]>
+					</fx:Script>
+					<s:Rect left="0" right="0" top="0" bottom="0">
+						<s:fill>
+							<s:SolidColor color="0x999999" alpha="0" alpha.hovered="0.2"
+										  alpha.selected="0.6" />
+						</s:fill>
+					</s:Rect>
+					
+					<s:HGroup width="100%" left="5" verticalAlign="middle" height="25">
+						<s:HGroup gap="5" width="80%" >
+							<s:Label fontSize="8" 
+									 text="사용자: {data.userInfo} ," />
+							<s:Label fontSize="10" fontWeight="bold" 
+									 text="관리번호: {data.manageNumber} ," />
+							<s:Label fontSize="10" fontWeight="bold" 
+									 text="장비위치: {data.position}" />
+						</s:HGroup>
+					</s:HGroup>
+				</s:ItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	<s:actionContent>
+		<s:Button label="Home" click="fnAppEnd(event)"/>
+	</s:actionContent>
+</s:View>

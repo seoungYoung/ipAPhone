@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:fb="http://ns.adobe.com/flashbuilder/2009" minWidth="21" minHeight="21">
+	<fx:Metadata>
+		<![CDATA[ 
+		[HostComponent("spark.components.Button")]
+		]]>
+	</fx:Metadata>
+	<s:states>
+		<s:State name="up" />
+		<s:State name="over" />
+		<s:State name="down" />
+		<s:State name="disabled" />
+	</s:states>
+	<s:Rect id="layer1" left="-1" right="-1" top="-1" bottom="-1" radiusX="5">
+		<s:fill>
+			<!--<s:BitmapFill source="@Embed('assets/reading.png')"/>-->
+			<s:SolidColor color="0xFFFF00" />
+		</s:fill>
+		<s:filters> 
+			<s:DropShadowFilter />
+			<s:GlowFilter />
+		</s:filters>
+	</s:Rect>	
+	<s:Rect id="layer2" left="-1" right="-1" top="-1" bottom="-1" radiusX="5">
+		<s:stroke>
+			<s:SolidColorStroke color="0xFF0000" weight="1"/>
+		</s:stroke>
+	</s:Rect>
+	<s:Label id="labelDisplay" textAlign="center" verticalAlign="middle" maxDisplayedLines="1" fontWeight="bold"
+			  fontSize="12" color="0x0000ff"
+			 horizontalCenter="0" verticalCenter="1" left="10" right="10" top="2" bottom="2" />
+</s:SparkSkin>

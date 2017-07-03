@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" creationComplete="init();" 
+		xmlns:s="library://ns.adobe.com/flex/spark">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="login"/>
+	</s:states>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.core.IFlexDisplayObject;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			import air.net.URLMonitor;
+			
+			import utils.DBHandler;
+			private var monitor:URLMonitor;
+			private var ac:ArrayCollection;
+			[Bindable]
+			private var $searchList:ArrayCollection;
+			[Bindable]
+			private var $cnt:int;
+			private var $no:int;
+			public static var $changeValue:Object;
+			private var db:DBHandler;
+			private var $schoolPhone:String;
+			public static var $ip:String="poseidon.iptime.org:12345";;
+			public static var $teacherCode:String;
+			private var $myso:SharedObject;
+			[Bindable]
+			private var $teacherName:String="";
+			private var $oriData:ArrayCollection;
+			
+			private function init():void {
+				this.$myso=SharedObject.getLocal("stmm");
+				if(this.$myso.size!=0) {
+					this.$teacherName=this.$myso.data.name;
+					StmmHomeView.$teacherCode=this.$myso.data.teacherCode;
+					this.okInit();
+					this.currentState="normal";
+				}
+				else {
+					var popup:MakeOfOriginalDataAlert=new MakeOfOriginalDataAlert();
+					popup.addEventListener("alertClose",fnPopUpCloseHandler);
+					popup.msg="처음 설치하셨군요!\n사용자 인증 합니다!";
+					PopUpManager.addPopUp(popup,this,true);
+					PopUpManager.centerPopUp(popup);
+				}
+				this.addEventListener(Event.ADDED_TO_STAGE,fnAddStageHandler);
+			}
+			private function fnAddStageHandler(e:Event):void {
+				this.stage.focus=this.ti;
+				this.ti.imeMode="KOREAN";
+				this.ti.addEventListener(FocusEvent.FOCUS_IN,fnfocusInHandler);
+			}
+			private function fnfocusInHandler(e:FocusEvent):void {
+				this.ti.imeMode="KOREAN";
+			}
+			private function fnPopUpCloseHandler(e:Event):void {
+				this.currentState="login";
+				this.loadDataBtn.visible=false;
+			}
+			private function okInit():void {
+				var hs1:HTTPService=new HTTPService();
+				hs1.url="http://"+StmmHomeView.$ip+"/sgp/loadSchoolInfo.php";
+				hs1.resultFormat="text";
+				hs1.addEventListener(ResultEvent.RESULT,fnResult);
+				hs1.send();
+				
+				var file:File=File.desktopDirectory.resolvePath("teacherNumberInfo");
+				if(file.exists) {
+					this.loadServerBtn.visible=false;
+					this.loadLocalBtn.visible=true;
+					var hs:HTTPService=new HTTPService();
+					hs.url="http://"+StmmHomeView.$ip+"/sgp/confirmTeacherUpdateCheck.php?id="+StmmHomeView.$teacherCode;
+					hs.resultFormat="text";
+					hs.addEventListener(ResultEvent.RESULT,fnResult2);
+					hs.send();
+				}
+				else {
+					this.loadServerBtn.visible=true;
+					this.loadLocalBtn.visible=false;
+				}
+			}
+			
+			private function fnResult(e:ResultEvent):void {
+				//				trace(e.result);
+				var arr:Array=String(e.result).split(",");
+				this.address.text="학교 주소 : "+arr[0];
+				this.schoolTel.text="학교 전화번호 : "+arr[1];
+				this.$schoolPhone=arr[1];
+				this.schoolTel.addEventListener(MouseEvent.CLICK,fnSchoolCall);
+			}
+			private function fnSchoolCall(e:MouseEvent):void {
+				trace(this.$schoolPhone);
+				navigateToURL(new URLRequest("tel:"+this.$schoolPhone));
+			}
+			private function fnResult2(e:ResultEvent):void {
+				if(e.result==1) {
+					this.errorMsg("변경 데이터가 있습니다.\n다시 받으세요");
+					var req:URLRequest=new URLRequest("assets/ding.mp3");
+					var sound:Sound=new Sound(req);
+					sound.play(0,1);
+					var file:File=File.desktopDirectory.resolvePath("teacherNumberInfo");
+					file.deleteFile();
+					this.loadServerBtn.visible=true;
+					this.loadLocalBtn.visible=false;
+				}
+			}
+			private function fnDetailViewHandler(e:Event):void {
+				var win:TeacherDataDetailView=new TeacherDataDetailView();
+				win.$recordData=StmmHomeView.$changeValue;
+				PopUpManager.addPopUp(win,this,true);//  .createPopUp(this,win,true);
+				PopUpManager.centerPopUp(win);
+			}
+			private function fnChangeHandler(e:Event):void {
+				StmmHomeView.$changeValue=this.$searchList[lst.selectedIndex];
+				//				trace(TeacherPhoneNumberView.$changeValue['tName']);
+			}
+			private function fnloadDataHandler():void {
+				var hs:HTTPService=new HTTPService();
+				hs.url="http://"+StmmHomeView.$ip+"/sgp/teacherPhoneCallNumber.php";
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResult5);
+				hs.send();
+			}
+			private function fnResult5(e:ResultEvent):void {
+				//				trace(e.result);
+				this.db=new DBHandler();
+				//				db.delAllData();
+				var tmp:Array=String(e.result).split("\r\n");
+				var listArray:Array=new Array();
+				for(var i:uint=0;i<tmp.length-1;i++) {
+					//					trace(tmp[i]);
+					var ar:Array=String(tmp[i]).split(",");
+					var o:Object={"no":(i+1),"tId":ar[1],"tName":ar[0],"tPhone":ar[2],"tPrimeNum":ar[3],"tPrivateNum":ar[4],"groupName":ar[5],"workDivide":ar[6]};
+					listArray.push(o);
+					//					this.$searchList.push(ar);
+				}
+				for(var j:uint=0;j<listArray.length;j++) {
+					//					trace(listArray[j]['tName']);
+					db.insertMember(listArray[j]['tName'],listArray[j]['tPhone'],listArray[j]['tPrimeNum'],listArray[j]['tPrivateNum']);
+				}
+				this.loadLocalBtn.visible=true;
+				this.loadServerBtn.visible=false;
+				var hs:HTTPService=new HTTPService();
+				hs.url="http://"+StmmHomeView.$ip+"/sgp/teacherUpdateCheck.php?id="+StmmHomeView.$teacherCode;
+				hs.send();
+				this.errorMsg("데이터를 가져왔습니다");
+			}
+			private function fnLocalDataLoadHandler():void {
+				this.db=new DBHandler();
+				this.$searchList=new ArrayCollection(db.selAllMember());
+				this.$oriData=this.$searchList;
+				this.$cnt=this.$searchList.length;
+			}
+			private function errorMsg(str:String):void {
+				var alert:MyAlert=new MyAlert();
+				alert.msg=str;
+				PopUpManager.addPopUp(alert,this,true);
+				PopUpManager.centerPopUp(alert);
+//				alert.addEventListener("alertClose",fnClose);
+			}
+			private function fnClose(e:Event):void {
+				this.fnAppEnd();
+			}
+			
+			private function fnLoadDataHandler():void {
+				if(this.$searchList==null || this.$searchList.length==0) {
+					this.errorMsg("먼저 자료를 불러오세요");
+					return;
+				}
+				else {
+					this.$searchList=new ArrayCollection();
+					//					var t:String=this.ti.text;
+					var t:String=this.ti.text+"\\w*";
+					var reg:RegExp=new RegExp(t);
+					//					var reg:RegExp=/정\w*/;
+					for(var i:uint=0;i<this.$oriData.length;i++) {
+						var str:String=this.$oriData.getItemAt(i).tName;
+						if(reg.test(str)) {
+							this.$searchList.addItem(this.$oriData.getItemAt(i));
+						}
+					}
+					this.$cnt=this.$searchList.length;
+				}
+				//				this.$searchList=new ArrayCollection(this.db.searchDataHandler(this.ti.text));
+			}
+			private function fnLoginHandler():void {
+				this.checkNetWork();
+			}
+			private function checkNetWork():void {
+				var str:String="http://"+StmmHomeView.$ip;
+				monitor = new URLMonitor(new URLRequest(str)); 
+				monitor.addEventListener(StatusEvent.STATUS, announceStatus); 
+				monitor.start(); 
+			}
+			private function announceStatus(e:StatusEvent):void { 
+				var result:Boolean=this.monitor.available;
+				//				trace("Status change. Current status: " + result); 
+				if(result) {
+					var hs:HTTPService=new HTTPService();
+					hs.url="http://"+StmmHomeView.$ip+"/sgp/teacherNameShareSearch.php?tName="+this.shareTeacherName.text;
+					//				trace(hs.url);
+					hs.resultFormat="text";
+					hs.addEventListener(ResultEvent.RESULT,fnResult1);
+					hs.addEventListener(FaultEvent.FAULT,fnFault);
+					hs.send();
+				}
+				else {
+					this.errorMsg("서버 접속 오류!!\n관리자에게 문의하세요.");
+				}
+			}
+			private function fnFault(e:FaultEvent):void {
+				trace(e.message);
+			}
+			private function fnResult1(e:ResultEvent):void {
+				trace(e.result);
+				if(String(e.result)=="error") {
+					this.errorMsg("사용자 정보가 없습니다.\n관리자에게 문의하세요.");
+				}
+				else {
+					trace("ok");
+					var tmp:Array=String(e.result).split(",");
+					StmmHomeView.$teacherCode=tmp[1];
+					this.fnSaveSharedObject();
+					this.currentState="normal";
+					this.$teacherName=tmp[0];
+					this.loadDataBtn.visible=true;
+					this.okInit();
+				}
+			}
+			private function fnSaveSharedObject():void {
+				this.$myso.data.name=this.shareTeacherName.text;
+//				this.$myso.data.ip=stmmHomeView.$ip;
+				this.$myso.data.teacherCode=StmmHomeView.$teacherCode;
+				this.$myso.data.date=new Date();
+				try {
+					this.$myso.flush();
+				}
+				catch(e:Error) {
+					trace(e.message);
+				}
+			}
+			private function fnAppEnd(e:Event=null):void {
+				this.navigator.popView();
+			}
+			private function fnRemoveShareObject():void {
+				this.$myso.clear();
+				var pop:IFlexDisplayObject;
+				pop=PopUpManager.createPopUp(this,MyAlertPop,true);
+				PopUpManager.centerPopUp(pop);
+				pop.addEventListener("alertClose",fnAppEnd);
+			}
+		]]>
+	</fx:Script>
+	<s:Button click="fnloadDataHandler();" label="변경 데이터 가져오기" left="170" top="5" 
+			  id="loadServerBtn" includeIn="normal"  skinClass="skins.MyButtonSkin"/>
+	<s:Button click="fnLocalDataLoadHandler();" label="Load" left="150" top="5" 
+			  id="loadLocalBtn" includeIn="normal"  skinClass="skins.MyButtonSkin"/>
+	<s:Button label="교사인증 삭제" left="5" top="5" id="fnRemoveBtn" excludeFrom="login" click="fnRemoveShareObject();" 
+			  height="25" fontSize="10" skinClass="skins.MyButtonSkin"/>
+	<s:Label text="" id="schoolTel" top="35"/>
+	<s:Label text="" id="address" fontSize="12" top="55"/>
+	<s:Label text="직원 : {$cnt}명" right="5" top="5"  fontSize="12" fontWeight="bold" color="0xff0000"/>
+	<s:Label id="studentNameTxt" left="15" top="50" />
+	<s:Label text="double Touch 하면 팝업 창을 통해 전체 내용을 확인할 수 있습니다." top="110" color="0xff0000" fontStyle="italic"
+			 fontWeight="bold" includeIn="normal"  fontSize="10" left="5"/>
+	
+	<s:Label text=" 교사 이름 조회 : " includeIn="normal"  fontSize="15" color="0x0000ff" fontWeight="bold" y="80"  />
+	<s:TextInput id="ti" x="120" y="70" includeIn="normal"  text="정" width="100" />
+	<s:Button label="이름 조회" click="fnLoadDataHandler();" skinClass="skins.MyButtonSkin1" 
+			  id="loadDataBtn" height="25" fontSize="10" x="{this.ti.x+this.ti.width+5}" y="75"/>
+	
+	<s:List id="lst" y="120" width="100%" height="70%" dataProvider="{this.$searchList}" doubleClickEnabled="true"  
+			doubleClick="fnDetailViewHandler(event)" change="fnChangeHandler(event)" >
+		<s:itemRenderer>
+			<fx:Component>
+				<s:ItemRenderer creationComplete="fnAddHandler();"  >
+					<s:states>
+						<s:State name="normal" />
+						<s:State name="hovered" />
+						<s:State name="selected" />
+					</s:states>
+					<fx:Script>
+						<![CDATA[
+							import flash.net.navigateToURL;
+							
+							import views.StmmHomeView;
+							private function fnAddHandler():void {
+								
+							}
+							private function smsCallHandler(e:MouseEvent):void {
+								//								trace(e.currentTarget.label);
+								var str:String="";
+								str+="sms:";
+								str+=StmmHomeView.$changeValue['tPhone'];
+								//								trace(str);
+								navigateToURL(new URLRequest(str));
+							}
+							private function phoneCallHandler(e:MouseEvent):void {
+								//								trace(e.currentTarget.label);
+								var str:String="";
+								str+="tel:";
+								str+=StmmHomeView.$changeValue['tPhone'];
+								navigateToURL(new URLRequest(str));
+							}
+							
+						]]>
+					</fx:Script>
+					<s:Rect left="0" right="0" top="0" bottom="0">
+						<s:fill>
+							<s:SolidColor color="0x999999" alpha="0" alpha.hovered="0.2"
+										  alpha.selected="0.6" />
+						</s:fill>
+					</s:Rect>
+					
+					<s:HGroup width="100%" left="5" verticalAlign="middle" height="25">
+						<s:HGroup gap="5" width="80%" >
+							<s:Label fontSize="8" 
+									 text="{data.id}." />
+							<s:Label fontSize="10" fontWeight="bold" 
+									 text="성명 :{data.tName}" />
+							<s:Label fontSize="8"   width="100%"
+									 text="▶폰번호 :{data.tPhone}"  />
+						</s:HGroup>
+						<s:Button label="SMS" fontSize="7" height="15" width="60" skinClass="skins.MyButtonSkin" 
+								  click="smsCallHandler(event);"  />
+						<s:Button label="Call" fontSize="7" height="15" width="60"  skinClass="skins.MyButtonSkin"
+								  click="phoneCallHandler(event);"  />
+					</s:HGroup>
+				</s:ItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	<s:HGroup width="100%" includeIn="login" top="20" horizontalCenter="0" verticalAlign="middle">
+		<s:Label left="5" text="교사 이름 : " />
+		<s:TextInput width="100" id="shareTeacherName" text="홍길동" />
+		<s:Button label="확인" click="fnLoginHandler();" height="25" fontSize="10"  skinClass="skins.MyButtonSkin" />
+	</s:HGroup>
+	<s:actionContent>
+		<s:Button label="Home" click="fnAppEnd(event)"/>
+		<s:Label text="{this.$teacherName} 님" visible="{this.$teacherName!=''}" id="teacherNameLbl" right="1" color="0xffff00" fontSize="11"/>
+	</s:actionContent>
+</s:View>

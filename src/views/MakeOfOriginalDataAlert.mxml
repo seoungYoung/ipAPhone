@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   width="100%" borderColor="0x000000"
+				   backgroundColor="0x555555" borderWeight="5" cornerRadius="15" color="0xffff00"
+				   xmlns:s="library://ns.adobe.com/flex/spark">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Metadata>
+		[Event(name="alertClose", type="flash.events.TextEvent")]
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+			[Bindable]
+			public var msg:String;
+			private function closeHandler(e:MouseEvent):void {
+//				JsyFavouriteMobileHomeView.$isMakeFileBoolean=true;
+				this.dispatchEvent(new TextEvent("alertClose"));
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</fx:Script>
+	<s:VGroup width="100%" horizontalAlign="center" paddingBottom="15" paddingLeft="15" paddingRight="15" paddingTop="15">
+		<s:Label text="App 정보" color="0x99cc00" horizontalCenter="0" fontSize="35"/>
+		<s:Spacer height="10"/>
+		<s:Label id="lbl" text="{msg}" verticalCenter="0"/>
+		<s:Spacer height="15"/>
+		<s:Button label="닫기" width="150" click="closeHandler(event)" height="45" color="0xff0000" />
+		<s:Spacer height="5"/>
+	</s:VGroup>
+</s:BorderContainer>

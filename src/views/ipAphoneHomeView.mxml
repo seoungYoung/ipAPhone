@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="HomeView">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			private function fnIpManagerHandler():void {
+				this.navigator.pushView(IpManagerHomeView);
+//				trace("ip");
+			}
+			private function fnPhoneHandler():void {
+				this.navigator.pushView(StmmHomeView);
+			}
+			private function fnEndApp(e:Event=null):void {
+				NativeApplication.nativeApplication.exit();
+			}
+		]]>
+	</fx:Script>
+	<s:Button label="종료" click="fnEndApp(event)" />
+	<s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" y="50" >
+		<s:Button label="IP Manager" height="50%" width="100%" click="fnIpManagerHandler();"/>
+		<s:Button label="교직원 전화번호록" height="50%" width="100%" click="fnPhoneHandler();"/>
+	</s:VGroup>
+</s:View>
