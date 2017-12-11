@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" creationComplete="init();" 
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" creationComplete="init();" title="교직원 각종번호" 
 		xmlns:s="library://ns.adobe.com/flex/spark">
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
@@ -30,7 +30,11 @@
 			public static var $changeValue:Object;
 			private var db:DBHandler;
 			private var $schoolPhone:String;
-			public static var $ip:String="poseidon.iptime.org:12345";;
+//			외부
+			public static var $ip:String="122.37.216.171:12345";;
+//			집
+//			public static var $ip:String="192.168.219.107";;
+//			public static var $ip:String="poseidon.iptime.org:12345";;
 			public static var $teacherCode:String;
 			private var $myso:SharedObject;
 			[Bindable]
@@ -131,7 +135,7 @@
 				hs.send();
 			}
 			private function fnResult5(e:ResultEvent):void {
-				//				trace(e.result);
+				trace(e.result);
 				this.db=new DBHandler();
 				//				db.delAllData();
 				var tmp:Array=String(e.result).split("\r\n");

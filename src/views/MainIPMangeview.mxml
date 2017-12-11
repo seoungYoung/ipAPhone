@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" title="교내 IP 배정내역" creationComplete="init();" 
+		xmlns:s="library://ns.adobe.com/flex/spark" >
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			[Bindable]
+			private var $ac;
+			
+			private function init():void {
+				this.fnloadDataHandler();
+			}
+			private function fnloadDataHandler():void {
+				var hs:HTTPService=new HTTPService();
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/mainIPindex.html";
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResult);
+				hs.send();
+			}
+			private function fnResult(e:ResultEvent):void {
+//				trace(e.result);
+				if(e.result=="none") {
+					trace("없음");
+				}
+				else {
+					var tmp:Array=String(e.result).split("\r\n");
+					var listArray:Array=new Array();
+					for(var i:uint=0;i<tmp.length-1;i++) {
+						//					trace(tmp[i]);
+						var ar:Array=String(tmp[i]).split("|||");
+						var o:Object={"id":ar[0],"ipA":ar[1],"ipB":ar[2],"ipC":ar[3],"kind":ar[4],
+							"division":ar[5],"etc":ar[6]
+						};
+						listArray.push(o);
+					}
+					this.$ac=new ArrayCollection(listArray);
+				}
+			}
+			private function fnAppEnd(e:Event=null):void {
+				this.navigator.popView();
+			}
+		]]>
+	</fx:Script>
+	<s:DataGroup width="90%" height="80%" horizontalCenter="0" verticalCenter="0"
+				 dataProvider="{this.$ac}">
+		<s:layout>
+			<s:VerticalLayout/>
+		</s:layout>
+		<s:itemRenderer>
+			<fx:Component>
+				<s:ItemRenderer creationComplete="init();" height="20">
+					<fx:Script>
+						<![CDATA[
+							[Bindable]
+							private var $txt:String;
+							private function init():void {
+								var kind:String;
+								if(data.kind){
+									kind="유선";
+								}
+								else {
+									kind="무선";
+								}
+								this.$txt=data.id+". IP번호: "+data.ipA+"."+data.ipB+"."+data.ipC+" : ☞"+kind+",  내역:"+data.division;
+							}
+						]]>
+					</fx:Script>
+					<s:HGroup verticalAlign="middle">
+						<s:Label text="{this.$txt}" fontSize="12"/>
+					</s:HGroup>
+				</s:ItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:DataGroup>
+	<s:actionContent>
+		<s:Button label="Home" click="fnAppEnd(event)"/>
+	</s:actionContent>
+</s:View>

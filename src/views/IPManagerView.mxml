@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" creationComplete="init();" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="IP수정,삭제">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			import spark.events.IndexChangeEvent;
+			[Bindable]
+			private var $selectedData:Object;
+			private var ac:ArrayCollection;
+			private var mainSelectedIP:String;
+			private function init():void {
+				this.ac=data.ac;
+				this.$selectedData=data.selectData;
+				this.mainSelectedIP=data.mainSelectedIP;
+			}
+			override public function createReturnObject():Object {
+				var o:Object=new Object();
+				o.ac=this.ac;
+				o.mainSelectedIP=this.mainSelectedIP;
+				return o;
+			}
+			private function fnAppEnd(e:Event=null):void {
+				this.navigator.popView();
+			}
+			private function fnDelHandler():void {
+				var hs:HTTPService=new HTTPService();
+				var str:String="id="+this.$selectedData.id;
+								trace(str);
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/del.html?"+str;
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnDeleteResult);
+				hs.send();
+			}
+			private function fnDeleteResult(e:ResultEvent):void {
+				if(e.result=="ok") this.errorMsg("삭제했습니다.");
+				else {
+					this.errorMsg("삭제 DB 오류!!");
+					return;
+				}
+			}
+			private function fnEditHandler():void {
+//				trace(this.userInfoTxt.text);
+//				trace(this.$selectedData.id);
+				var hs:HTTPService=new HTTPService();
+				var str:String="id="+this.$selectedData.id+"&ipA="+this.ipATxt.text+"&ipB="+this.ipBTxt.text;
+				str+="&ipC="+this.ipCTxt.text+"&ipD="+this.ipDTxt.text;
+				str+="&wifi_ipA="+this.wifi_ipATxt.text+"&wifi_ipB="+this.wifi_ipBTxt.text;
+				str+="&wifi_ipC="+this.wifi_ipCTxt.text+"&wifi_ipD="+this.wifi_ipDTxt.text;
+				str+="&userInfo="+this.userInfoTxt.text+"&manageNumber="+this.managerNumberTxt.text;
+				str+="&position="+this.positionTxt.text+"&etc="+this.etcTxt.text;
+//				trace(str);
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/edit.html?"+str;
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResult);
+				hs.send();
+			}
+			private function fnResult(e:ResultEvent):void {
+				if(e.result=="ok") this.errorMsg("수정했습니다.");
+				else {
+					this.errorMsg("수정 오류!!");
+					return;
+				}
+			}
+			private function errorMsg(str:String):void {
+				var alert:MyAlert=new MyAlert();
+				alert.msg=str;
+				PopUpManager.addPopUp(alert,this,true);
+				PopUpManager.centerPopUp(alert);
+				alert.addEventListener("alertClose",fnClose);
+			}
+			private function fnClose(e:Event):void {
+				this.fnAppEnd();
+			}
+			private function changeSelection(event:IndexChangeEvent): void {
+//				trace("Selected Item: " + ButtonBar(event.target).selectedItem);
+				var sel:uint=ButtonBar(event.target).selectedIndex;
+				switch(sel) {
+					case 0:fnEditHandler();
+							break;
+					case 1:fnDelHandler();
+							break;
+					case 2:trace(sel);
+							this.navigator.popView();
+						//fnAppEnd()(); 작동 오류...
+							break;
+				}
+			}
+		]]>
+	</fx:Script>
+	<s:Form width="100%" height="370" >
+		<s:FormItem label="사용자" height="30" fontSize="10" >
+			<s:TextInput id="userInfoTxt" width="100" height="28" fontSize="8" text="{this.$selectedData.userInfo}" />
+		</s:FormItem>
+		<s:FormItem label="관리번호" height="30" fontSize="10" >
+			<s:TextInput id="managerNumberTxt" text="{this.$selectedData.manageNumber}" height="28" fontSize="8"    width="130"  />
+		</s:FormItem>
+		<s:FormItem label="망종류" height="30" fontSize="10" >
+			<s:TextInput text="{this.$selectedData.etc}" id="etcTxt" height="28" fontSize="8" width="130"  />
+		</s:FormItem>
+		<s:FormItem label="장비 위치" fontSize="10">
+			<s:TextInput text="{this.$selectedData.position}" height="28" fontSize="8" id="positionTxt" width="130"  />
+		</s:FormItem>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="IP A" fontSize="10">
+				<s:TextInput text="{this.$selectedData.ipA}" height="28" fontSize="8" id="ipATxt"  width="50"   />
+			</s:FormItem>
+			<s:FormItem label="IP B" fontSize="10">
+				<s:TextInput text="{this.$selectedData.ipB}" height="28" fontSize="8"  id="ipBTxt"  width="50"   />
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="IP C" fontSize="10">
+				<s:TextInput text="{this.$selectedData.ipC}" height="28" fontSize="8" id="ipCTxt"   width="50"   />
+			</s:FormItem>
+			<s:FormItem label="IP D" fontSize="10">
+				<s:TextInput text="{this.$selectedData.ipD}" height="28" fontSize="8" id="ipDTxt"   width="50"   />
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="무선 A" fontSize="10">
+				<s:TextInput text="{this.$selectedData.wifi_ipA}" id="wifi_ipATxt"  height="28" fontSize="8"  width="50"   />
+			</s:FormItem>
+			<s:FormItem label="무선 B" fontSize="10">
+				<s:TextInput text="{this.$selectedData.wifi_ipB}" height="28" id="wifi_ipBTxt"  fontSize="8"  width="50"   />
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="무선 C" fontSize="10">
+				<s:TextInput text="{this.$selectedData.wifi_ipC}" height="28" fontSize="8" id="wifi_ipCTxt"   width="50"   />
+			</s:FormItem>
+			<s:FormItem label="무선 D" fontSize="10">
+				<s:TextInput text="{this.$selectedData.wifi_ipD}" id="wifi_ipDTxt"  height="28" fontSize="8"  width="50"   />
+			</s:FormItem>
+		</s:HGroup>
+		
+	</s:Form>
+	<s:ButtonBar id="selectMenu" requireSelection="true" horizontalCenter="0" width="80%" bottom="10"
+				 change="changeSelection(event)">
+		<s:dataProvider>
+			<s:ArrayCollection source="['수정', '삭제', '취소']" />
+		</s:dataProvider>
+	</s:ButtonBar>
+	<s:actionContent>
+		<s:Button label="Home" click="fnAppEnd(event)"/>
+	</s:actionContent>
+</s:View>

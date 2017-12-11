@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
-		xmlns:s="library://ns.adobe.com/flex/spark" title="HomeView">
+		xmlns:s="library://ns.adobe.com/flex/spark" title="IP And Phone Manager">
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
+			import mx.effects.Blur;
 			private function fnIpManagerHandler():void {
 				this.navigator.pushView(IpManagerHomeView);
 //				trace("ip");
@@ -16,11 +17,19 @@
 			private function fnEndApp(e:Event=null):void {
 				NativeApplication.nativeApplication.exit();
 			}
+			private function fnMainIPHandler():void {
+				this.navigator.pushView(MainIPMangeview);
+			}
 		]]>
 	</fx:Script>
-	<s:Button label="종료" click="fnEndApp(event)" />
+	<s:Image source="assets/exit.png" width="50" height="50" right="10" top="5"  click="fnEndApp(event)" />
+	<!--<s:Button label="종료"  horizontalCenter="0"  click="fnEndApp(event)" />-->
 	<s:VGroup width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" y="50" >
-		<s:Button label="IP Manager" height="50%" width="100%" click="fnIpManagerHandler();"/>
-		<s:Button label="교직원 전화번호록" height="50%" width="100%" click="fnPhoneHandler();"/>
+		<s:Image source="./assets/ip1.jpg" height="50%" width="100%"  click="fnIpManagerHandler();"
+				  useHandCursor="true" buttonMode="true" />
+		
+		<s:Button label="교내 C Class IP 할당 내역" height="30" click="fnMainIPHandler();"/>
+		<s:Image source="./assets/phone1.jpg" height="50%" width="100%"  click="fnPhoneHandler();"
+				 useHandCursor="true" buttonMode="true"/>
 	</s:VGroup>
 </s:View>

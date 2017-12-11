@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" creationComplete="init();" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="IP추가하기">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			private var ac:ArrayCollection;
+			private var mainSelectedIP:String;			
+			
+			private function init():void {
+				this.ac=data.ac;
+				this.mainSelectedIP=data.mainSelectedIP;
+			}
+			override public function createReturnObject():Object {
+				var o:Object=new Object();
+				o.ac=this.ac;
+				o.mainSelectedIP=this.mainSelectedIP;
+				return o;
+			}
+			private function fnAppEnd(e:Event=null):void {
+				this.navigator.popView();
+			}
+			private function errorMsg(str:String):void {
+				var alert:MyAlert=new MyAlert();
+				alert.msg=str;
+				PopUpManager.addPopUp(alert,this,true);
+				PopUpManager.centerPopUp(alert);
+				alert.addEventListener("alertClose",fnClose);
+			}
+			private function fnAddHandler():void {
+				var hs:HTTPService=new HTTPService();
+				var str:String="ipA="+this.ipATxt.text+"&ipB="+this.ipBTxt.text;
+				str+="&ipC="+this.ipCTxt.text+"&ipD="+this.ipDTxt.text;
+				str+="&wifi_ipA="+this.wifi_ipATxt.text+"&wifi_ipB="+this.wifi_ipBTxt.text;
+				str+="&wifi_ipC="+this.wifi_ipCTxt.text+"&wifi_ipD="+this.wifi_ipDTxt.text;
+				str+="&userInfo="+this.userInfoTxt.text+"&manageNumber="+this.managerNumberTxt.text;
+				str+="&position="+this.positionTxt.text+"&etc="+this.etcTxt.text;
+				//				trace(str);
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/add.html?"+str;
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResult);
+				hs.send();
+			}
+			private function fnResult(e:ResultEvent):void {
+				if(e.result=="ok") this.errorMsg("추가 했습니다!");
+				else {
+					this.errorMsg("DB 오류!!");
+					return;
+				}
+			}
+			private function fnClose(e:Event):void {
+				this.fnAppEnd();
+			}
+			private function fnPositionChangeHandler():void {
+				this.frm.y=-180;
+			}
+			private function fnPositionChangeHandler1():void {
+				this.frm.y=-250;
+			}
+			private function fnOriginalPositionHandler():void {
+				this.frm.y=0;
+			}
+		]]>
+	</fx:Script>
+	<s:Form width="100%" height="370" id="frm" >
+		<s:FormItem label="사용자" height="30" fontSize="10" >
+			<s:TextInput id="userInfoTxt" width="100" height="28" fontSize="8" />
+		</s:FormItem>
+		<s:FormItem label="관리번호" height="30" fontSize="10" >
+			<s:TextInput id="managerNumberTxt" height="28" fontSize="8"    width="130"  />
+		</s:FormItem>
+		<s:FormItem label="망종류" height="30" fontSize="10" >
+			<s:TextInput id="etcTxt" height="28" fontSize="8" width="130"  />
+		</s:FormItem>
+		<s:FormItem label="장비 위치" fontSize="10">
+			<s:TextInput  height="28" fontSize="8" id="positionTxt" width="130"  />
+		</s:FormItem>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="IP A" fontSize="10">
+				<s:TextInput  height="28" fontSize="8" id="ipATxt"  width="50" focusIn="fnPositionChangeHandler();"
+							   focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+			<s:FormItem label="IP B" fontSize="10">
+				<s:TextInput  height="28" fontSize="8"  id="ipBTxt"  width="50"   focusIn="fnPositionChangeHandler();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="IP C" fontSize="10">
+				<s:TextInput  height="28" fontSize="8" id="ipCTxt"   width="50"   focusIn="fnPositionChangeHandler();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+			<s:FormItem label="IP D" fontSize="10">
+				<s:TextInput  height="28" fontSize="8" id="ipDTxt"   width="50"   focusIn="fnPositionChangeHandler();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="무선 A" fontSize="10">
+				<s:TextInput  id="wifi_ipATxt"  height="28" fontSize="8"  width="50"   focusIn="fnPositionChangeHandler();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+			<s:FormItem label="무선 B" fontSize="10">
+				<s:TextInput  height="28" id="wifi_ipBTxt"  fontSize="8"  width="50"   focusIn="fnPositionChangeHandler();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5">
+			<s:FormItem label="무선 C" fontSize="10">
+				<s:TextInput  height="28" fontSize="8" id="wifi_ipCTxt"   width="50"    focusIn="fnPositionChangeHandler1();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+			<s:FormItem label="무선 D" fontSize="10">
+				<s:TextInput  id="wifi_ipDTxt"  height="28" fontSize="8"  width="50"    focusIn="fnPositionChangeHandler1();"
+							  focusOut="fnOriginalPositionHandler();"/>
+			</s:FormItem>
+		</s:HGroup>
+		<s:HGroup width="100%" gap="5" verticalAlign="middle" horizontalAlign="center" height="30">
+			<s:Button label="추가"  fontSize="10" height="30" click="fnAddHandler();" />
+			<s:Label width="70%"/>
+			<s:Button label="취소" fontSize="10" height="30"  click="fnAppEnd(event)"/>
+		</s:HGroup>
+	</s:Form>
+	<s:actionContent>
+		<s:Button label="Home" click="fnAppEnd(event)"/>
+	</s:actionContent>
+</s:View>

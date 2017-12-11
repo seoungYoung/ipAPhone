@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" add="addHandler(event)" creationComplete="init();"
 		xmlns:s="library://ns.adobe.com/flex/spark"
-		creationComplete="fnloadDataHandler()" title="IpManagerHomeView">
+		title="IP 메니저 홈">
 	<s:states>
 		<s:State name="normal"/>
 		<s:State name="login"/>
 	</s:states>
-	
 	<fx:Script>
 		<![CDATA[
 			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
 			import mx.core.IFlexDisplayObject;
+			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
@@ -21,8 +22,11 @@
 			import skins.MyButtonSkin;
 			
 			import utils.DBHandler;
+			
 			private var monitor:URLMonitor;
 			private var ac:ArrayCollection;
+			[Bindable]
+			private var $count:uint=0;
 			[Bindable]
 			private var $searchList:ArrayCollection;
 			[Bindable]
@@ -31,18 +35,71 @@
 			public static var $changeValue:Object;
 			private var db:DBHandler;
 			private var $schoolPhone:String;
-			public static var $ip:String="poseidon.iptime.org:12345";;
 			public static var $teacherCode:String;
 			private var $myso:SharedObject;
 			[Bindable]
 			private var $teacherName:String="";
 			private var $oriData:ArrayCollection;
+			[Bindable]
+			private var $firstSearch:Boolean=false;
+			[Bindable]
+			private var mainIP:ArrayList;
+			private var selectedIP:String;
+			
+			private function init():void {
+//				this.currentState="login";
+				var hs:HTTPService=new HTTPService();
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/mainIPindex.html";
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResult);
+				hs.send();
+			}
+			private function fnResult(e:ResultEvent):void {
+//								trace(e.result);
+				var tmp:Array=String(e.result).split("\r\n");
+				var listArray:Array=new Array();
+				for(var i:uint=0;i<tmp.length-1;i++) {
+					//					trace(tmp[i]);
+					var ar:Array=String(tmp[i]).split("|||");
+					var lbl:String=ar[1]+"."+ar[2]+"."+ar[3];
+					listArray.push(lbl);
+				}
+				this.mainIP=new ArrayList(listArray);
+			}
 			private function fnAppEnd(e:Event=null):void {
 				this.navigator.popView();
 			}
+			protected function addHandler(e:FlexEvent):void {
+				if (data == null) {
+					this.currentState="login";
+					data = new Object(); 
+					return;
+				}
+				if(this.navigator.poppedViewReturnedObject!=null) {
+					this.currentState="normal";
+					this.$searchList = navigator.poppedViewReturnedObject.object.ac;
+					this.selectedIP=navigator.poppedViewReturnedObject.object.mainSelectedIP;
+					if(this.$searchList != null) {
+						this.$count=this.$searchList.length; 
+					}
+					else this.$count=0;
+					this.addEventListener(FlexEvent.STATE_CHANGE_COMPLETE,fnAdd);
+				}
+				else {
+					
+				}
+			}
+			private function fnAdd(e:FlexEvent):void {
+				var t:Array=String(this.selectedIP).split(".");
+				trace(t[0],"tt");
+				this.classA.text=t[0];
+				this.classB.text=t[1];
+				this.classC.text=t[2];
+				if(this.$searchList != null) this.ipSearch.enabled=true;
+			}
 			private function fnloadDataHandler():void {
 				var hs:HTTPService=new HTTPService();
-				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/index.html?classA=10&classB=125&classC=145";
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/index.html?line=cable&classA="+this.classA.text+"&classB="+this.classB.text+"&classC="+this.classC.text;
 				hs.resultFormat="text";
 				hs.addEventListener(ResultEvent.RESULT,fnResult5);
 				hs.send();
@@ -53,12 +110,16 @@
 				for(var i:uint=0;i<tmp.length-1;i++) {
 					//					trace(tmp[i]);
 					var ar:Array=String(tmp[i]).split(",");
-//					var o:Object={"no":(i+1),"tId":ar[1],"tName":ar[0],"tPhone":ar[2],"tPrimeNum":ar[3],"tPrivateNum":ar[4],"groupName":ar[5],"workDivide":ar[6]};
-					var o:Object={"userInfo":ar[0],"manageNumber":ar[1],"position":ar[2],"etc":ar[3]};
+					var o:Object={"id":ar[0],"ipA":ar[1],"ipB":ar[2],"ipC":ar[3],"ipD":ar[4],
+									"wifi_ipA":ar[5],"wifi_ipB":ar[6],"wifi_ipC":ar[7],"wifi_ipD":ar[8],
+									"userInfo":ar[10],"manageNumber":ar[9],"position":ar[11],"etc":ar[12]
+								};
 					listArray.push(o);
 				}
 				this.$searchList=new ArrayCollection(listArray);
-				this.errorMsg("데이터를 가져왔습니다");
+				this.$count=this.$searchList.length;
+				this.$firstSearch=true;
+//				this.errorMsg("데이터를 가져왔습니다");
 			}
 			
 			private function errorMsg(str:String):void {
@@ -68,11 +129,96 @@
 				PopUpManager.centerPopUp(alert);
 				//				alert.addEventListener("alertClose",fnClose);
 			}
+			private function fnDetailViewHandler(e:Event):void {
+				var win:IPDataDetailView=new IPDataDetailView();
+				win.$recordData=IpManagerHomeView.$changeValue;
+				PopUpManager.addPopUp(win,this,true);//  .createPopUp(this,win,true);
+				PopUpManager.centerPopUp(win);
+			}
+			private function fnChangeHandler(e:Event):void {
+				IpManagerHomeView.$changeValue=this.$searchList[lst.selectedIndex];
+				//				trace(TeacherPhoneNumberView.$changeValue['tName']);
+			}
+			private function fnUsedIPView():void {
+				var o:Object={"ac":this.$searchList,"selIP":this.selectedIP,"mainSelectedIP":this.selectedIP};
+				this.navigator.pushView(UsedIPView,o);
+			}
+			private function fnIPManager():void {
+				if(this.lst.selectedIndex!=-1) {
+					var o:Object={"ac":this.$searchList,"selectData":this.$searchList[lst.selectedIndex],"mainSelectedIP":this.selectedIP};
+					this.navigator.pushView(IPManagerView,o);
+				}
+				else this.errorMsg("수정할 IP 선택 후 실행하세요!");
+			}
+			private function fnBlankIPView():void {
+				var o:Object={"ac":this.$searchList,"selIP":this.selectedIP,"mainSelectedIP":this.selectedIP};
+				this.navigator.pushView(BlankIPView,o);
+			}
+			private function fnIPAddHandler():void {
+				var o:Object={"ac":this.$searchList,"mainSelectedIP":this.selectedIP};
+				this.navigator.pushView(IPAddView,o);
+			}
+			private function fnSearchUserInfoView():void {
+				var o:Object={"ac":this.$searchList,"mainSelectedIP":this.selectedIP};
+				this.navigator.pushView(SearchUserInfoView,o);
+			}
+			private function fnloadWifiDataHandler():void {
+				var hs:HTTPService=new HTTPService();
+				hs.url="http://"+StmmHomeView.$ip+"/ipSearchApp/index.html?line=wifi&classA="+this.classA.text+"&classB="+this.classB.text+"&classC="+this.classC.text;
+				hs.resultFormat="text";
+				hs.addEventListener(ResultEvent.RESULT,fnResultWifi);
+				hs.send();
+			}
+			private function fnResultWifi(e:ResultEvent):void {
+				var tmp:Array=String(e.result).split("\r\n");
+				var listArray:Array=new Array();
+				for(var i:uint=0;i<tmp.length-1;i++) {
+					//					trace(tmp[i]);
+					var ar:Array=String(tmp[i]).split(",");
+					var o:Object={"id":ar[0],"ipA":ar[1],"ipB":ar[2],"ipC":ar[3],"ipD":ar[4],
+						"wifi_ipA":ar[5],"wifi_ipB":ar[6],"wifi_ipC":ar[7],"wifi_ipD":ar[8],
+						"userInfo":ar[10],"manageNumber":ar[9],"position":ar[11],"etc":ar[12]
+					};
+					listArray.push(o);
+				}
+				this.$searchList=new ArrayCollection(listArray); 
+				this.$count=this.$searchList.length;
+				this.$firstSearch=true;
+				//				this.errorMsg("데이터를 가져왔습니다"); 
+			}
+			private function fnChoiceIPHandler():void {
+				this.currentState="normal";
+//				trace(this.secList.selectedItem);
+				var t:Array=String(this.secList.selectedItem).split(".");
+				this.classA.text=t[0] as String;
+				this.classB.text=t[1] as String;
+				this.classC.text=t[2] as String;
+				this.selectedIP=t[0]+"."+t[1]+"."+t[2]; 
+			}
 		]]>
 	</fx:Script>
-	<s:Label top="10" horizontalCenter="0" text="IP 관리"/>
+	<s:HGroup gap="20" horizontalAlign="center" verticalAlign="middle" width="100%" top="5" includeIn="normal">
+		<s:Button label="사용IP보기" fontSize="10" height="30" click="fnUsedIPView()"/>
+		<s:Button label="IP 관리" fontSize="10" height="30"  click="fnIPManager();"/>
+		<s:Button label="IP 추가" fontSize="10" height="30" enabled="{this.$searchList.length>0}"  click="fnIPAddHandler();"/>
+		<s:Button label="빈IP찾기" fontSize="10" height="30"  click="fnBlankIPView();"/>
+	</s:HGroup>
+	<s:HGroup gap="2" horizontalAlign="center" verticalAlign="middle" width="100%" top="40" includeIn="normal" >
+		<s:Label text="A:"/>
+		<s:TextInput id="classA" height="28" fontSize="8"   width="40"/>
+		<s:Label text="B:"/>
+		<s:TextInput id="classB" height="28" fontSize="8"  width="40"/>
+		<s:Label text="C:"/>
+		<s:TextInput id="classC" height="28" fontSize="8"  width="40"/>
+		<s:Button label="유선IP" fontSize="10" height="30" click="fnloadDataHandler();" />
+		<s:Button label="무선IP" fontSize="10" height="30" click="fnloadWifiDataHandler();" />
+	</s:HGroup>
+	<s:SpinnerListContainer verticalCenter="0" horizontalCenter="0" includeIn="login">
+		<s:SpinnerList id="secList" width="100" selectedIndex="2" dataProvider="{mainIP}" />
+	</s:SpinnerListContainer>
+	<s:Button label="관리 IP 선택" fontSize="10" height="30" horizontalCenter="0" y="350" includeIn="login" click="fnChoiceIPHandler();" />
 	<s:List id="lst" y="80" width="100%" height="70%" dataProvider="{this.$searchList}" doubleClickEnabled="true"  
-			 >
+			doubleClick="fnDetailViewHandler(event)" change="fnChangeHandler(event)" includeIn="normal" >
 		<s:itemRenderer>
 			<fx:Component>
 				<s:ItemRenderer  >
@@ -95,20 +241,23 @@
 					
 					<s:HGroup width="100%" left="5" verticalAlign="middle" height="25">
 						<s:HGroup gap="5" width="80%" >
-							<s:Label fontSize="8" 
+							<s:Label fontSize="11" fontWeight="bold" color="0xff0000"
 									 text="사용자: {data.userInfo} ," />
 							<s:Label fontSize="10" fontWeight="bold" 
 									 text="관리번호: {data.manageNumber} ," />
 							<s:Label fontSize="10" fontWeight="bold" 
 									 text="장비위치: {data.position}" />
-							<s:Label fontSize="10" fontWeight="bold" 
-									 text="기타: {data.etc}" />
 						</s:HGroup>
 					</s:HGroup>
 				</s:ItemRenderer>
 			</fx:Component>
 		</s:itemRenderer>
 	</s:List>
+	<s:HGroup width="100%" bottom="10" verticalAlign="middle" horizontalAlign="center" includeIn="normal">
+		<s:Button label="사용자 이름으로 IP 검색" fontSize="10" height="30" id="ipSearch" enabled="{this.$firstSearch}"  click="fnSearchUserInfoView();"/>
+		<s:Label width="20%" />
+		<s:Label text="현재 갯수 : {this.$count} 대" fontWeight="bold" fontSize="13" color="0x0000ff"/>
+	</s:HGroup>
 	<s:actionContent>
 		<s:Button label="Home" click="fnAppEnd(event)"/>
 	</s:actionContent>
